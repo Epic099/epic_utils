@@ -1,4 +1,5 @@
 import time
+import sys
 
 class ProgressBar:
     def __init__(self):
@@ -6,10 +7,11 @@ class ProgressBar:
         self.start = time.time()
 
     def setPercent(self, i: int):
-        if not isinstance(i, int) and not isinstance(i, float):
+        if not isinstance(i, (int, float)):
             return
-        i = max(0, min(100, int(i)))
-        self.percent = i
+        i = max(0, min(100, i))
+        self.percent = int(i)
+
     def getLinearTime(self):
         if self.percent == 0:
             return 0
@@ -28,7 +30,8 @@ class ProgressBar:
         remain = self.getLinearTime()
         hashtags = int(self.percent/2)
         print(f"[{'#'*hashtags}{'-'*(50-hashtags)}] - {self.percent}% ({remain})", end="\r")
-        if (p == 100):
+        sys.stdout.flush()
+        if (self.percent == 100):
             print("\n")
 
     def fromTime(self, sec):
@@ -38,3 +41,4 @@ class ProgressBar:
             self.setPercent(i)
             self.display()
             time.sleep(t)
+
