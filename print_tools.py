@@ -13,6 +13,7 @@ class ProgressBar:
             self.width = os.get_terminal_size().columns-25
             return
         self.width = width
+        
     def setPercent(self, i: int):
         if not isinstance(i, (int, float)):
             return
