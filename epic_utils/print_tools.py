@@ -65,29 +65,42 @@ class StatusText:
         self.text = text
         self.state = STATE.LOADING
         self.spinner = itertools.cycle(['-', '/', '|', '\\'])
+
+        self._stop_event = False
     
     def showLoading(self):
         while self.state == STATE.LOADING:
+            if self._stop_event:
+                break # Force Quit the Thread
             print(f"[{next(self.spinner)}] {self.text}", end="\r")
             time.sleep(0.3)
 
+
     def display(self):
         if self.state == STATE.SUCCESS:
-            print(f"[OK] {self.text}")
+            print(f"\033[92m[OK]\033[0m {self.text}")  # green for success
         elif self.state == STATE.LOADING:
             thread = threading.Thread(target=self.showLoading)
             thread.start()
         elif self.state == STATE.FAILED:
-            print(f"[FAILED] {self.text}")
+            print(f"\033[91m[FAILED]\033[0m {self.text}")
         sys.stdout.flush()
+    
+    def force_stop(self):
+        self._stop_event = True
+        print("") # Clear current line to ensure next print works correctly
 
     def setState(self, state: STATE):
         self.state = state
 
+#  # red for fail
+
+ 
 s = StatusText("Downloading")
 s.display()
 
-time.sleep(5)
 
+time.sleep(2)
+s.force_stop()
 s.setState(STATE.SUCCESS)
 s.display()
