@@ -1,25 +1,4 @@
-<style>
-    h1 > div > a {
-        display: none;
-    }
-    h2 > div > a {
-        display: none;
-    }
-    h3 > div > a {
-        display: none;
-    }
-    h4 > div > a {
-        display: none;
-    }
-    h5 > div > a {
-        display: none;
-    }
-    h6 > div > a {
-        display: none;
-    }
-</style>s
-
-# epic_utils
+<h1> epic_utils </h1>
 Latest Version: 0.3.7
 
 ## Description
