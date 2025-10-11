@@ -1,6 +1,12 @@
 import time
 import sys
 import os
+from enum import Enum
+
+class STATE(Enum):
+    LOADING = 1
+    SUCCESS = 2
+    FAILED = 3
 
 class ProgressBar:
     def __init__(self, width=50):
@@ -13,7 +19,7 @@ class ProgressBar:
             self.width = os.get_terminal_size().columns-25
             return
         self.width = width
-        
+
     def setPercent(self, i: int):
         if not isinstance(i, (int, float)):
             return
@@ -51,3 +57,17 @@ class ProgressBar:
             self.setPercent(i)
             self.display()
             time.sleep(t)
+
+class StatusText:
+    def __init__(self, text: str):
+        self.text = text
+        self.state = STATE.LOADING
+        print("")
+    
+    def display(self):
+        print(f"[] {self.text}", end="\r")
+
+        sys.stdout.flush()
+
+s = StatusText("Downloading")
+s.display()
