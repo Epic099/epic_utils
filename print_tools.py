@@ -1,6 +1,8 @@
 import time
 import sys
 import os
+import itertools
+import asyncio
 from enum import Enum
 
 class STATE(Enum):
@@ -62,12 +64,29 @@ class StatusText:
     def __init__(self, text: str):
         self.text = text
         self.state = STATE.LOADING
-        print("")
+        self.spinner = itertools.cycle(['-', '/', '|', '\\'])
     
-    def display(self):
-        print(f"[] {self.text}", end="\r")
+    async def showLoading(self):
+        while self.state == STATE.LOADING:
+            print(f"[{next(self.spinner)}] {self.text}", end="\r")
+            await asyncio.sleep(0.25)
 
+    def display(self):
+        if self.state == STATE.SUCCESS:
+            print(f"[OK] {self.text}")
+        elif self.state == STATE.LOADING:
+            asyncio.run(self.showLoading())
+        elif self.state == STATE.FAILED:
+            print(f"[FAILED] {self.text}")
         sys.stdout.flush()
 
+    def setState(self, state: STATE):
+        self.state = state
+
 s = StatusText("Downloading")
+s.display()
+
+time.sleep(10)
+
+s.setState(STATE.SUCCESS)
 s.display()
