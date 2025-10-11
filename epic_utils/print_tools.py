@@ -93,14 +93,4 @@ class StatusText:
     def setState(self, state: STATE):
         self.state = state
 
-#  # red for fail
 
- 
-s = StatusText("Downloading")
-s.display()
-
-
-time.sleep(2)
-s.force_stop()
-s.setState(STATE.SUCCESS)
-s.display()
