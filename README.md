@@ -1,4 +1,4 @@
-<h1> epic_utils </h1>
+# epic_utils
 Latest Version: 0.3.7
 
 ## Description
