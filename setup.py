@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
 name='epic-utils',
-version='0.3.7',
+version='0.3.7.1',
 author='Epic099',
 author_email='',
 description='Dependencies i regurlarly use',

@@ -3,6 +3,8 @@ import sys
 import os
 import itertools
 import threading
+
+from colorama import Fore, Back, Style
 from enum import Enum
 
 class STATE(Enum):
@@ -74,16 +76,17 @@ class StatusText:
                 break # Force Quit the Thread
             print(f"[{next(self.spinner)}] {self.text}", end="\r")
             time.sleep(0.3)
+        self.display()
 
 
     def display(self):
         if self.state == STATE.SUCCESS:
-            print(f"\033[92m[OK]\033[0m {self.text}")  # green for success
+            print(Fore.GREEN + "[OK] " + Style.RESET_ALL + self.text)  # green for success
         elif self.state == STATE.LOADING:
             thread = threading.Thread(target=self.showLoading)
             thread.start()
         elif self.state == STATE.FAILED:
-            print(f"\033[91m[FAILED]\033[0m {self.text}")
+            print(Fore.RED + "[FAILED] " + Style.RESET_ALL + self.text)  # green for success
         sys.stdout.flush()
     
     def force_stop(self):
@@ -92,5 +95,3 @@ class StatusText:
 
     def setState(self, state: STATE):
         self.state = state
-
-
