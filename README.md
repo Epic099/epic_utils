@@ -2,7 +2,7 @@
 Latest Version: 0.3.8
 
 ## Description
-A simple package that I am creatng overtime. It includes tools fIor pygame, mathematics, roblox or debuging. The package is being upgraded over time.
+A simple package that I am creating overtime. It includes tools for pygame, mathematics, roblox or debuging. The package is being upgraded over time.
 
 ## Installation
 ### Pip
