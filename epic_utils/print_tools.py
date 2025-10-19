@@ -95,3 +95,4 @@ class StatusText:
 
     def setState(self, state: STATE):
         self.state = state
+
