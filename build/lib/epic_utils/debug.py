@@ -47,18 +47,3 @@ class VariableLog():
                 print(f"\t{t} | {change[1]} -> {change[2]}")
 
     
-class Timer:
-    def __init__(self, name):
-        self.name = name
-        self.start = time.time()
-        self.end = 0
-        self.duration = 0
-
-    def stop(self, print_result=True):
-        self.end = time.time()
-        self.duration = self.end-self.start
-        if not print_result:
-            return
-        
-        print(f"{self.name} | {self.duration}s")
-
