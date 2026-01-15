@@ -1,5 +1,5 @@
 import struct
-from .datatype import DB_ULong, DB_Str, DB_Float, DB_Value
+from .datatype import DB_Str, DB_Value
 from datetime import datetime
 
 MAGICNUMBER = "EPDB".encode("utf-8")
@@ -112,19 +112,21 @@ class Database():
 			file.write(END_IDENT)
 			
 	def read(self):
+		self.values = {}
 		with open(self.filename, "rb") as file:
 			magic = file.read(len(MAGICNUMBER))
+			if magic != MAGICNUMBER:
+				raise Exception("Wrong file type")
 			file.read(1) # space
 
 			head_ident = file.read(len(HEADER_IDENT))
 			version = struct.unpack(">B", file.read(1))[0]
-			print(magic, version)
 			if version != FORMAT_VERSION:
 				print("test")
 				return # wrong file version. Avoid loading file to not corrupt it
 			table_count = struct.unpack(">I", file.read(4))[0]
 			if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
-				raise MemoryError(f"Tables not correctly initialized. Expected {table_count} tables got {len(self.tables)}")
+				raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
 			date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
 			data_ident = file.read(len(DATA_IDENT))
 			for i in range(0, table_count, 1):
@@ -134,6 +136,8 @@ class Database():
 				key_type = DB_Value.getType(key_ident)
 				key_length = struct.unpack(">H", file.read(2))[0]
 				key_name = file.read(key_length).decode("utf-8")
+				if table.key_name != key_name:
+					raise Exception("Format Error. Table has wrong key name")
 
 				attribute_count = struct.unpack(">B", file.read(1))[0]
 				entry_count = struct.unpack(">I", file.read(4))[0]
@@ -157,23 +161,5 @@ class Database():
 							continue
 						value = struct.unpack(coloumns[k][1].FORMAT, file.read(coloumns[k][1]().getAllocation()[0]))[0]
 						values[coloumns[k][0]] = value
-					db.insert(table_index, table.object(**values))
-					#table.object()
-					pass # implement entry reading later but I will store them as dictionary and unpack them into the object provided by the pre registered table which is identified by its id
+					self.insert(table_index, table.object(**values))
 		
-class User(DBObject):
-	def __init__(self, userid=0, username="", cash=0):
-		self.userid = DB_ULong(value=userid)
-		self.username = DB_Str(value=username)
-		self.cash = DB_Float(value=cash)
-		
-	
-
-db = Database("test.epicdb")
-db.register_table(0, "userid", User)
-db.read()
-"""db.insert(0, User(userid=15239, username="epic099", cash=200))
-db.insert(0, User(userid=1248, username="frieske", cash=500))
-db.save()"""
-
-
