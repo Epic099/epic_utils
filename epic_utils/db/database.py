@@ -122,7 +122,6 @@ class Database():
 			head_ident = file.read(len(HEADER_IDENT))
 			version = struct.unpack(">B", file.read(1))[0]
 			if version != FORMAT_VERSION:
-				print("test")
 				return # wrong file version. Avoid loading file to not corrupt it
 			table_count = struct.unpack(">I", file.read(4))[0]
 			if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
