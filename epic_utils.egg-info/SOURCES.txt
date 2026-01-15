@@ -1,4 +1,5 @@
 README.md
+pyproject.toml
 setup.py
 epic_utils/__init__.py
 epic_utils/animation.py
@@ -14,6 +15,8 @@ epic_utils.egg-info/SOURCES.txt
 epic_utils.egg-info/dependency_links.txt
 epic_utils.egg-info/requires.txt
 epic_utils.egg-info/top_level.txt
+epic_utils/db/database.py
+epic_utils/db/datatype.py
 epic_utils/pygame/__init__.py
 epic_utils/pygame/assets.py
 epic_utils/pygame/config.py
