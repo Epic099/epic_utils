@@ -29,7 +29,7 @@ class DB_Byte(DB_Value):
 	
 	def set(self, value: int):
 		if value < -128 or value > 127:
-			return
+			raise ValueError("Value out of range (min: -128, max: 127)")
 		self.value = int(value)
 
 class DB_UByte(DB_Value):
@@ -41,7 +41,7 @@ class DB_UByte(DB_Value):
 		
 	def set(self, value: int):
 		if value < 0 or value > 255:
-			return
+			raise ValueError("Value out of range (min: 0, max: 255)")
 		self.value = int(value)
 
 class DB_Short(DB_Value):
@@ -53,7 +53,7 @@ class DB_Short(DB_Value):
 	
 	def set(self, value: int):
 		if value < -32768 or value > 32767:
-			return
+			raise ValueError("Value out of range (min: -32768, max: 32767)")
 		self.value = int(value)
 
 class DB_UShort(DB_Value):
@@ -65,7 +65,7 @@ class DB_UShort(DB_Value):
 		
 	def set(self, value: int):
 		if value < 0 or value > 65535:
-			return
+			raise ValueError("Value out of range (min: 0, max: 65535)")
 		self.value = int(value)
 
 class DB_Int(DB_Value):
@@ -77,7 +77,7 @@ class DB_Int(DB_Value):
 	
 	def set(self, value: int):
 		if value < -2147483648 or value > 2147483647:
-			return
+			raise ValueError("Value out of range (min: -2147483648, max: 2147483647)")
 		self.value = int(value)
 		
 class DB_UInt(DB_Value):
@@ -89,7 +89,7 @@ class DB_UInt(DB_Value):
 		
 	def set(self, value: int):
 		if value < 0 or value > 4294967295:
-			return
+			raise ValueError("Value out of range (min: 0, max: 4294967295)")
 		self.value = int(value)
 
 class DB_Float(DB_Value):
@@ -110,7 +110,7 @@ class DB_Long(DB_Value):
 		
 	def set(self, value: int):
 		if value < -9223372036854775808 or value > 9223372036854775807:
-			return
+			raise ValueError("Value out of range (min: -9223372036854775808, max: 9223372036854775807)")
 		self.value = int(value)
 		
 class DB_ULong(DB_Value):
@@ -122,17 +122,18 @@ class DB_ULong(DB_Value):
 		
 	def set(self, value: int):
 		if value < 0 or value > 18446744073709551615:
+			raise ValueError("Value out of range (min: 0, max: 18446744073709551615)")
 			return
 		self.value = int(value)
 
 class DB_Str(DB_Value):
 	DB_IDENT = 0x06
-	FORMAT = "STR"
+	FORMAT = None
 	def __init__(self, value: str = ""):
 		self.value = 0
 		self.set(value)
 		
-	def set(self, value: int):
+	def set(self, value: str):
 		self.value = str(value)
 	
 	def getBytes(self):
