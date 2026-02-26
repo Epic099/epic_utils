@@ -25,7 +25,7 @@ class DBObject:
 			try:
 				_ = getattr(typ, "DB_IDENT")
 				result.append([child, typ, getattr(self, child).value])
-			except:
+			except AttributeError:
 				pass
 				#Not a valid value to store
 		return result
@@ -39,7 +39,7 @@ class DBTable:
 		
 		self.key_type = type(getattr(_object, self.key_name))
 		_values = _object.get_values()
-		self.coloumns = [[temp[0], temp[1].DB_IDENT] for temp in _values] # [name, type]
+		self.columns = [[temp[0], temp[1].DB_IDENT] for temp in _values] # [name, type]
 		
 		self.values = {}
 		
@@ -91,9 +91,9 @@ class Database():
 				file.write(struct.pack(">B", table.key_type.DB_IDENT)) #key type
 				file.write(struct.pack(">H", len(table.key_name))) # key length (maybe change to 1 Byte length?)
 				file.write(table.key_name.encode("utf-8")) # key name
-				file.write(struct.pack(">B", len(table.coloumns))) # number of attributes				
+				file.write(struct.pack(">B", len(table.columns))) # number of attributes				
 				file.write(struct.pack(">I", len(table.values.keys()))) # number of entries
-				for col in table.coloumns:
+				for col in table.columns:
 					file.write(struct.pack(">B", col[1])) # attribute type
 					file.write(struct.pack(">H", len(col[0]))) # name length of attribute (maybe also change to 1 Byte?)
 					file.write(col[0].encode("utf-8")) # attribute name
@@ -101,7 +101,7 @@ class Database():
 				for key in table.values.keys():
 					file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
 					object = table.values[key]
-					for col in table.coloumns:
+					for col in table.columns:
 						if col[1] == DB_Str.DB_IDENT:
 							file.write(struct.pack(">I", getattr(object, col[0]).getAllocation()[0])) # value length
 							file.write(getattr(object, col[0]).getBytes())
@@ -140,25 +140,25 @@ class Database():
 
 				attribute_count = struct.unpack(">B", file.read(1))[0]
 				entry_count = struct.unpack(">I", file.read(4))[0]
-				coloumns = []
+				columns = []
 
 				for i in range(0, attribute_count, 1):
 					typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
 					name_length = struct.unpack(">H", file.read(2))[0]
 					attribute_name = file.read(name_length).decode("utf-8")
-					coloumns.append([attribute_name, typ])
+					columns.append([attribute_name, typ])
 				
 				for i in range(0, entry_count, 1):
 					key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
 					values = {}
 					for k in range(0, attribute_count):
 						value = None
-						if coloumns[k][1].DB_IDENT == DB_Str.DB_IDENT:
+						if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
 							length = struct.unpack(">I", file.read(4))[0]
 							value = file.read(length).decode("utf-8")
-							values[coloumns[k][0]] = value
+							values[columns[k][0]] = value
 							continue
-						value = struct.unpack(coloumns[k][1].FORMAT, file.read(coloumns[k][1]().getAllocation()[0]))[0]
-						values[coloumns[k][0]] = value
+						value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
+						values[columns[k][0]] = value
 					self.insert(table_index, table.object(**values))
 		
