@@ -130,7 +130,7 @@ class DB_Str(DB_Value):
 	DB_IDENT = 0x06
 	FORMAT = None
 	def __init__(self, value: str = ""):
-		self.value = 0
+		self.value = ""
 		self.set(value)
 		
 	def set(self, value: str):
