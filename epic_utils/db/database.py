@@ -51,6 +51,11 @@ class DBTable:
 		if key.get() in self.values.keys():
 			raise IndexError(f"Key already exists in table")
 		self.values[key.get()] = object
+
+	def get(self, key):
+		if getattr(type(key), "FORMAT", -1) == -1:
+			raise IndexError("Invalid key")
+		return self.values[key.get()]
 		
 class Database():
 	def __init__(self, filename):
@@ -68,6 +73,11 @@ class Database():
 			raise IndexError("Table index doesnt exist")
 		table.insert(object)
 
+	def get(self, table_index: int, key: DB_Value):
+		table = self.get_table(table_index)
+		if table == None:
+			raise Exception("Table index does not exist")
+		return table.get(key)
 
 	def register_table(self, index: int, key_name: str, object: any):
 		for table in self.tables:

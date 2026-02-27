@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: epic-utils
-Version: 0.4.2.1
+Version: 0.4.3
 Summary: A simple package that I am creating overtime. It includes tools for pygame, mathematics, roblox or debuging. The package is being upgraded over time.
 Author: Epic099
 License-Expression: MIT
@@ -12,7 +12,7 @@ Requires-Dist: numpy
 Requires-Dist: websockets
 
 # epic_utils
-Latest Version: 0.4.2.1
+Latest Version: 0.4.3
 
 ## Description
 A simple package that I am creating overtime. It includes tools for pygame, mathematics, roblox or debuging. The package is being upgraded over time.
