@@ -48,6 +48,8 @@ class DBTable:
 			raise TypeError(f"Invalid type. Expected <{self.object.__name__}> got <{type(object).__name__}>")
 			#return # can only store provided objects
 		key = getattr(object, self.key_name)
+		if key.get() in self.values.keys():
+			raise IndexError(f"Key already exists in table")
 		self.values[key.get()] = object
 		
 class Database():
