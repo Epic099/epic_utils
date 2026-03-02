@@ -2,4 +2,4 @@ pygame
 requests
 numpy
 websockets
-argon2
+argon2-cffi

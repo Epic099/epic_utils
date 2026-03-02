@@ -1,9 +1,9 @@
-from argon2 import PasswordHasher
+from argon2 import PasswordHasher as _PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import uuid
 
 class PasswordManager:
-    _hasher = PasswordHasher()
+    _hasher = _PasswordHasher()
     @staticmethod
     def hash(password: str):
         hash = PasswordManager._hasher.hash(password)
