@@ -239,7 +239,11 @@ class Database():
 						columns.append([attribute_name, typ])
 					
 					for i in range(0, entry_count, 1):
-						key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
+						key = None
+						if key_ident == DB_Str.DB_IDENT:
+							key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
+						else:
+							key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
 						values = {}
 						for k in range(0, attribute_count):
 							value = None

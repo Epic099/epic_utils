@@ -1,5 +1,5 @@
 # epic_utils
-Latest Version: 0.4.5.2
+Latest Version: 0.4.6
 
 ## Description
 A simple package that I am creating overtime. It includes tools for pygame, mathematics, roblox or debuging. The package is being upgraded over time.
