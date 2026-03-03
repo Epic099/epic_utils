@@ -142,7 +142,11 @@ class Database():
 						file.write(struct.pack(">H", len(col[0]))) # name length of attribute (maybe also change to 1 Byte?)
 						file.write(col[0].encode("utf-8")) # attribute name
 					for key in table.values.keys():
-						file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
+						if table.key_type.DB_IDENT == DB_Str.DB_IDENT:
+							file.write(struct.pack(">I", len(key)))
+							file.write(key.encode("utf-8"))
+						else:
+							file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
 						object = table.values[key]
 						for col in table.columns:
 							if col[1] == DB_Str.DB_IDENT:
