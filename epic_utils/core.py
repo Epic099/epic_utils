@@ -59,7 +59,7 @@ class Vector2():
     
     @staticmethod
     def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+        return v1.x * v2.x + v1.y * v2.y
     
     @staticmethod
     def fromArray(array : tuple):
@@ -219,7 +219,7 @@ class Vector2Int():
     
     @staticmethod
     def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+        return v1.x * v2.x + v1.y * v2.y
     
     @staticmethod
     def fromArray(array : tuple):
@@ -1025,3 +1025,4 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
