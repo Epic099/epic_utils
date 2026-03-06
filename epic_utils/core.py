@@ -687,22 +687,6 @@ class Vector3Int():
             ErrorHandler.raiseError(TypeError, f"<Vector3Int, Vector3Int> expected, got <{type(vector1).__name__},{type(vector2).__name__}>")
         return math.sqrt(Vector3Int.sqrDistance(vector1, vector2))
     @staticmethod
-    def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
-    @staticmethod
-    def ProjectOnPlane(vector, plane_normal):
-        normal = plane_normal
-        projection_length = Vector3Int.dot(vector, normal)
-        projection_vector = normal * projection_length
-
-        return vector - projection_vector
-    @staticmethod
-    def cross(v1, v2):
-        cross_x = v1.y * v2.z - v1.z * v2.y
-        cross_y = v1.z * v2.x - v1.x * v2.z
-        cross_z = v1.x * v2.y - v1.y * v2.x
-        return Vector3Int(cross_x, cross_y, cross_z)
-    @staticmethod
     def fromArray(array : Union[list, tuple]):
         if not ErrorHandler.isTypes(array, [list, tuple]):
             ErrorHandler.raiseError(TypeError, f"<list|tuple> expected, got <{type(array).__name__}>")
@@ -1025,6 +1009,7 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
 
 
 
