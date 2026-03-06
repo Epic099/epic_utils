@@ -721,7 +721,7 @@ class Vector3Int():
     def max(*args):
         result = Vector3Int.negativeInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector3):
+            if not ErrorHandler.isType(vector, Vector3Int):
                 continue
             result.x = max(result.x, vector.x)
             result.y = max(result.y, vector.y)
@@ -731,7 +731,7 @@ class Vector3Int():
     def min(*args):
         result = Vector3Int.positiveInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector3):
+            if not ErrorHandler.isType(vector, Vector3Int):
                 continue
             result.x = min(result.x, vector.x)
             result.y = min(result.y, vector.y)
@@ -817,21 +817,21 @@ class Vector3Int():
         return Vector3Int(-self.x, -self.y, -self.z)
 
     def __add__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x + value.x, self.y + value.y, self.z + value.z)
         return Vector3Int(self.x + value, self.y + value, self.z + value)
     def __sub__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x - value.x, self.y - value.y, self.z - value.z)
         return Vector3Int(self.x - value, self.y - value, self.z - value)    
     def __mul__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x * value.x, self.y * value.y, self.z * value.z)
         return Vector3Int(self.x * value, self.y * value, self.z * value)
     def __rmul__(self, scalar):
         return self.__mul__(scalar)
     def __div__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             if value.x == 0.0 or value.y == 0.0 or value.z == 0.0:
                 ErrorHandler.raiseError(ZeroDivisionError, "")    
             return Vector3Int(self.x / value.x, self.y / value.y, self.z / value.z)
@@ -839,7 +839,7 @@ class Vector3Int():
             ErrorHandler.raiseError(ZeroDivisionError, "")
         return Vector3Int(self.x / value, self.y / value, self.z / value)
     def __truediv__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             if value.x == 0.0 or value.y == 0.0 or value.z == 0.0:
                 ErrorHandler.raiseError(ZeroDivisionError, "")    
             return Vector3Int(self.x / value.x, self.y / value.y, self.z / value.z)
@@ -847,7 +847,7 @@ class Vector3Int():
             ErrorHandler.raiseError(ZeroDivisionError, "")
         return Vector3Int(self.x / value, self.y / value, self.z / value) 
     def __pow__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x **value.x, self.y**value.y, self.z**value.z)
         return Vector3Int(self.x**value, self.y**value, self.z**value)
     
@@ -1025,6 +1025,7 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
 
 
 
