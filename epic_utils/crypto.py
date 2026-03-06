@@ -1,6 +1,6 @@
 from argon2 import PasswordHasher as _PasswordHasher
 from argon2.exceptions import VerifyMismatchError
-import uuid
+import secrets
 
 class PasswordManager:
     _hasher = _PasswordHasher()
@@ -19,4 +19,4 @@ class PasswordManager:
     
     @staticmethod
     def create_key():
-        return str(uuid.uuid4())
+        return secrets.token_hex(32)
