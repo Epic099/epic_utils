@@ -15,6 +15,8 @@ class PasswordManager:
             PasswordManager._hasher.verify(hash, password)
         except VerifyMismatchError:
             return False    
+        except Exception:
+            return False
         return True
     
     @staticmethod
