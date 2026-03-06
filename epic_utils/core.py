@@ -59,7 +59,7 @@ class Vector2():
     
     @staticmethod
     def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+        return v1.x * v2.x + v1.y * v2.y
     
     @staticmethod
     def fromArray(array : tuple):
@@ -219,7 +219,7 @@ class Vector2Int():
     
     @staticmethod
     def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
+        return v1.x * v2.x + v1.y * v2.y
     
     @staticmethod
     def fromArray(array : tuple):
@@ -458,9 +458,9 @@ class Vector3():
     
     @staticmethod
     def max(*args):
-        result = Vector2.negativeInfinity
+        result = Vector3.negativeInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector2):
+            if not ErrorHandler.isType(vector, Vector3):
                 continue
             result.x = max(result.x, vector.x)
             result.y = max(result.y, vector.y)
@@ -484,9 +484,9 @@ class Vector3():
     
     @staticmethod
     def QuadraticBezierInterpolation(p0, p1, p2, time : float):
-        tempA = Vector3.linearInterpolation(p0, p1, time)
-        tempB = Vector3.linearInterpolation(p1, p2, time)
-        return Vector3.linearInterpolation(tempA, tempB, time)
+        tempA = Vector3.LinearInterpolation(p0, p1, time)
+        tempB = Vector3.LinearInterpolation(p1, p2, time)
+        return Vector3.LinearInterpolation(tempA, tempB, time)
     
     @staticmethod
     def CubicBezierInterpolation(p0, p1, p2, p3, time : float):
@@ -687,22 +687,6 @@ class Vector3Int():
             ErrorHandler.raiseError(TypeError, f"<Vector3Int, Vector3Int> expected, got <{type(vector1).__name__},{type(vector2).__name__}>")
         return math.sqrt(Vector3Int.sqrDistance(vector1, vector2))
     @staticmethod
-    def dot(v1, v2):
-        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
-    @staticmethod
-    def ProjectOnPlane(vector, plane_normal):
-        normal = plane_normal
-        projection_length = Vector3Int.dot(vector, normal)
-        projection_vector = normal * projection_length
-
-        return vector - projection_vector
-    @staticmethod
-    def cross(v1, v2):
-        cross_x = v1.y * v2.z - v1.z * v2.y
-        cross_y = v1.z * v2.x - v1.x * v2.z
-        cross_z = v1.x * v2.y - v1.y * v2.x
-        return Vector3Int(cross_x, cross_y, cross_z)
-    @staticmethod
     def fromArray(array : Union[list, tuple]):
         if not ErrorHandler.isTypes(array, [list, tuple]):
             ErrorHandler.raiseError(TypeError, f"<list|tuple> expected, got <{type(array).__name__}>")
@@ -719,9 +703,9 @@ class Vector3Int():
         return Vector3Int(dictionary["x"], dictionary["y"], dictionary["z"])
     @staticmethod
     def max(*args):
-        result = Vector2Int.negativeInfinity
+        result = Vector3Int.negativeInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector2):
+            if not ErrorHandler.isType(vector, Vector3Int):
                 continue
             result.x = max(result.x, vector.x)
             result.y = max(result.y, vector.y)
@@ -731,7 +715,7 @@ class Vector3Int():
     def min(*args):
         result = Vector3Int.positiveInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector3):
+            if not ErrorHandler.isType(vector, Vector3Int):
                 continue
             result.x = min(result.x, vector.x)
             result.y = min(result.y, vector.y)
@@ -744,9 +728,9 @@ class Vector3Int():
     
     @staticmethod
     def QuadraticBezierInterpolation(p0, p1, p2, time : float):
-        tempA = Vector3Int.linearInterpolation(p0, p1, time)
-        tempB = Vector3Int.linearInterpolation(p1, p2, time)
-        return Vector3Int.linearInterpolation(tempA, tempB, time)
+        tempA = Vector3Int.LinearInterpolation(p0, p1, time)
+        tempB = Vector3Int.LinearInterpolation(p1, p2, time)
+        return Vector3Int.LinearInterpolation(tempA, tempB, time)
     @staticmethod
     def CubicBezierInterpolation(p0, p1, p2, p3, time : float):
         tempA = Vector3Int.LinearInterpolation(p0, p1, time)
@@ -810,28 +794,28 @@ class Vector3Int():
         return Vector3Int(-math.inf, -math.inf, -math.inf)
     
     def __eq__(self, other):
-        if ErrorHandler.isType(other, Vector3Int or ErrorHandler.isType(other, Vector3)):
+        if ErrorHandler.isType(other, Vector3Int) or ErrorHandler.isType(other, Vector3):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return self.x == other and self.y == other and self.z == other
     def __neg__(self):
         return Vector3Int(-self.x, -self.y, -self.z)
 
     def __add__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x + value.x, self.y + value.y, self.z + value.z)
         return Vector3Int(self.x + value, self.y + value, self.z + value)
     def __sub__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x - value.x, self.y - value.y, self.z - value.z)
         return Vector3Int(self.x - value, self.y - value, self.z - value)    
     def __mul__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x * value.x, self.y * value.y, self.z * value.z)
         return Vector3Int(self.x * value, self.y * value, self.z * value)
     def __rmul__(self, scalar):
         return self.__mul__(scalar)
     def __div__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             if value.x == 0.0 or value.y == 0.0 or value.z == 0.0:
                 ErrorHandler.raiseError(ZeroDivisionError, "")    
             return Vector3Int(self.x / value.x, self.y / value.y, self.z / value.z)
@@ -839,7 +823,7 @@ class Vector3Int():
             ErrorHandler.raiseError(ZeroDivisionError, "")
         return Vector3Int(self.x / value, self.y / value, self.z / value)
     def __truediv__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             if value.x == 0.0 or value.y == 0.0 or value.z == 0.0:
                 ErrorHandler.raiseError(ZeroDivisionError, "")    
             return Vector3Int(self.x / value.x, self.y / value.y, self.z / value.z)
@@ -847,7 +831,7 @@ class Vector3Int():
             ErrorHandler.raiseError(ZeroDivisionError, "")
         return Vector3Int(self.x / value, self.y / value, self.z / value) 
     def __pow__(self, value):
-        if ErrorHandler.isType(value, Vector3Int or ErrorHandler.isType(value, Vector3)):
+        if ErrorHandler.isType(value, Vector3Int) or ErrorHandler.isType(value, Vector3):
             return Vector3Int(self.x **value.x, self.y**value.y, self.z**value.z)
         return Vector3Int(self.x**value, self.y**value, self.z**value)
     
@@ -909,7 +893,7 @@ class Quaternion():
         mag_squared = self.sqrMagnitude
         if mag_squared == 0:
             ErrorHandler.raiseError(ZeroDivisionError, "")
-        conjugate_q = self.conjugate()
+        conjugate_q = self.conjugate
         return Quaternion(conjugate_q.w / mag_squared, conjugate_q.x / mag_squared, conjugate_q.y / mag_squared, conjugate_q.z / mag_squared)
     def __mul__(self, other):
         if ErrorHandler.isType(other, Quaternion):
@@ -1025,3 +1009,8 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
+
+
+
+

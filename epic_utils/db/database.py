@@ -239,6 +239,43 @@ class Database():
 						entry_count = struct.unpack(">I", file.read(4))[0]
 						columns = []
 
+					for i in range(0, attribute_count, 1):
+						typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+						name_length = struct.unpack(">H", file.read(2))[0]
+						attribute_name = file.read(name_length).decode("utf-8")
+						columns.append([attribute_name, typ])
+					
+					for i in range(0, entry_count, 1):
+						key = None
+						if key_ident == DB_Str.DB_IDENT:
+							key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
+						else:
+							key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
+						values = {}
+						for k in range(0, attribute_count):
+							value = None
+							if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
+								length = struct.unpack(">I", file.read(4))[0]
+								value = file.read(length).decode("utf-8")
+								values[columns[k][0]] = value
+								continue
+							elif columns[k][1].DB_IDENT == DB_Array.DB_IDENT:
+								array_length = struct.unpack(">I", file.read(4))[0]
+								array_type = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+								array_values = []
+								if array_type.DB_IDENT == DB_Str.DB_IDENT:
+									for i in range(0, array_length):
+										string_length = struct.unpack(">I", file.read(4))[0]
+										array_values.append(DB_Str(file.read(string_length).decode("utf-8")))
+								else:
+									for i in range(0, array_length):
+										array_values.append(array_type(struct.unpack(array_type.FORMAT, file.read(array_type().getAllocation()[0]))[0]))
+								values[columns[k][0]] = array_values
+								continue
+							value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
+							values[columns[k][0]] = value
+						self.insert(table_index, table.object(**values))
+
 						for i in range(0, attribute_count, 1):
 							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
 							name_length = struct.unpack(">H", file.read(2))[0]
