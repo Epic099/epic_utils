@@ -484,9 +484,9 @@ class Vector3():
     
     @staticmethod
     def QuadraticBezierInterpolation(p0, p1, p2, time : float):
-        tempA = Vector3.linearInterpolation(p0, p1, time)
-        tempB = Vector3.linearInterpolation(p1, p2, time)
-        return Vector3.linearInterpolation(tempA, tempB, time)
+        tempA = Vector3.LinearInterpolation(p0, p1, time)
+        tempB = Vector3.LinearInterpolation(p1, p2, time)
+        return Vector3.LinearInterpolation(tempA, tempB, time)
     
     @staticmethod
     def CubicBezierInterpolation(p0, p1, p2, p3, time : float):
@@ -744,9 +744,9 @@ class Vector3Int():
     
     @staticmethod
     def QuadraticBezierInterpolation(p0, p1, p2, time : float):
-        tempA = Vector3Int.linearInterpolation(p0, p1, time)
-        tempB = Vector3Int.linearInterpolation(p1, p2, time)
-        return Vector3Int.linearInterpolation(tempA, tempB, time)
+        tempA = Vector3Int.LinearInterpolation(p0, p1, time)
+        tempB = Vector3Int.LinearInterpolation(p1, p2, time)
+        return Vector3Int.LinearInterpolation(tempA, tempB, time)
     @staticmethod
     def CubicBezierInterpolation(p0, p1, p2, p3, time : float):
         tempA = Vector3Int.LinearInterpolation(p0, p1, time)
@@ -810,7 +810,7 @@ class Vector3Int():
         return Vector3Int(-math.inf, -math.inf, -math.inf)
     
     def __eq__(self, other):
-        if ErrorHandler.isType(other, Vector3Int or ErrorHandler.isType(other, Vector3)):
+        if ErrorHandler.isType(other, Vector3Int) or ErrorHandler.isType(other, Vector3):
             return self.x == other.x and self.y == other.y and self.z == other.z
         return self.x == other and self.y == other and self.z == other
     def __neg__(self):
@@ -1025,5 +1025,6 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
 
 
