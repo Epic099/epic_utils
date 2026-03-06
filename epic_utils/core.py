@@ -458,9 +458,9 @@ class Vector3():
     
     @staticmethod
     def max(*args):
-        result = Vector2.negativeInfinity
+        result = Vector3.negativeInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector2):
+            if not ErrorHandler.isType(vector, Vector3):
                 continue
             result.x = max(result.x, vector.x)
             result.y = max(result.y, vector.y)
@@ -719,9 +719,9 @@ class Vector3Int():
         return Vector3Int(dictionary["x"], dictionary["y"], dictionary["z"])
     @staticmethod
     def max(*args):
-        result = Vector2Int.negativeInfinity
+        result = Vector3Int.negativeInfinity
         for vector in args:
-            if not ErrorHandler.isType(vector, Vector2):
+            if not ErrorHandler.isType(vector, Vector3):
                 continue
             result.x = max(result.x, vector.x)
             result.y = max(result.y, vector.y)
@@ -909,7 +909,7 @@ class Quaternion():
         mag_squared = self.sqrMagnitude
         if mag_squared == 0:
             ErrorHandler.raiseError(ZeroDivisionError, "")
-        conjugate_q = self.conjugate()
+        conjugate_q = self.conjugate
         return Quaternion(conjugate_q.w / mag_squared, conjugate_q.x / mag_squared, conjugate_q.y / mag_squared, conjugate_q.z / mag_squared)
     def __mul__(self, other):
         if ErrorHandler.isType(other, Quaternion):
@@ -1025,4 +1025,5 @@ class Color():
         return f"Color({self.r}, {self.g}, {self.b})"
     
     
+
 
