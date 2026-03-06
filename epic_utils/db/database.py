@@ -57,6 +57,8 @@ class DBTable:
 	def get(self, key):
 		if getattr(type(key), "FORMAT", -1) == -1 or type(key).DB_IDENT != self.key_type.DB_IDENT:
 			raise IndexError("Invalid key")
+		if key.get() not in self.values.keys():
+			return
 		return self.values[key.get()]
 		
 class Database():
@@ -170,105 +172,108 @@ class Database():
 	def read(self):
 		for table in self.tables:
 			table.values = {}
-		with open(self.filename, "rb") as file:
-			magic = file.read(len(MAGICNUMBER))
-			if magic != MAGICNUMBER:
-				raise Exception("Wrong file type")
-			file.read(1) # space
-			head_ident = file.read(len(HEADER_IDENT))
-			version = struct.unpack(">B", file.read(1))[0]
-			if version == 1:
-				table_count = struct.unpack(">I", file.read(4))[0]
-				if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
-					raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
-				date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
-				data_ident = file.read(len(DATA_IDENT))
-				for i in range(0, table_count, 1):
-					table_index = struct.unpack(">I", file.read(4))[0]
-					table = self.get_table(table_index)
-					key_ident = struct.unpack(">B", file.read(1))[0]
-					key_type = DB_Value.getType(key_ident)
-					key_length = struct.unpack(">H", file.read(2))[0]
-					key_name = file.read(key_length).decode("utf-8")
-					if table.key_name != key_name:
-						raise Exception("Format Error. Table has wrong key name")
+		try:
+			with open(self.filename, "rb") as file:
+				magic = file.read(len(MAGICNUMBER))
+				if magic != MAGICNUMBER:
+					raise Exception("Wrong file type")
+				file.read(1) # space
+				head_ident = file.read(len(HEADER_IDENT))
+				version = struct.unpack(">B", file.read(1))[0]
+				if version == 1:
+					table_count = struct.unpack(">I", file.read(4))[0]
+					if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
+						raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
+					date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
+					data_ident = file.read(len(DATA_IDENT))
+					for i in range(0, table_count, 1):
+						table_index = struct.unpack(">I", file.read(4))[0]
+						table = self.get_table(table_index)
+						key_ident = struct.unpack(">B", file.read(1))[0]
+						key_type = DB_Value.getType(key_ident)
+						key_length = struct.unpack(">H", file.read(2))[0]
+						key_name = file.read(key_length).decode("utf-8")
+						if table.key_name != key_name:
+							raise Exception("Format Error. Table has wrong key name")
 
-					attribute_count = struct.unpack(">B", file.read(1))[0]
-					entry_count = struct.unpack(">I", file.read(4))[0]
-					columns = []
+						attribute_count = struct.unpack(">B", file.read(1))[0]
+						entry_count = struct.unpack(">I", file.read(4))[0]
+						columns = []
 
-					for i in range(0, attribute_count, 1):
-						typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
-						name_length = struct.unpack(">H", file.read(2))[0]
-						attribute_name = file.read(name_length).decode("utf-8")
-						columns.append([attribute_name, typ])
-					
-					for i in range(0, entry_count, 1):
-						key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
-						values = {}
-						for k in range(0, attribute_count):
-							value = None
-							if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
-								length = struct.unpack(">I", file.read(4))[0]
-								value = file.read(length).decode("utf-8")
-								values[columns[k][0]] = value
-								continue
-							value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
-							values[columns[k][0]] = value
-						self.insert(table_index, table.object(**values))
-			elif version == 2:
-				table_count = struct.unpack(">I", file.read(4))[0]
-				if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
-					raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
-				date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
-				data_ident = file.read(len(DATA_IDENT))
-				for i in range(0, table_count, 1):
-					table_index = struct.unpack(">I", file.read(4))[0]
-					table = self.get_table(table_index)
-					key_ident = struct.unpack(">B", file.read(1))[0]
-					key_type = DB_Value.getType(key_ident)
-					key_length = struct.unpack(">H", file.read(2))[0]
-					key_name = file.read(key_length).decode("utf-8")
-					if table.key_name != key_name:
-						raise Exception("Format Error. Table has wrong key name")
-
-					attribute_count = struct.unpack(">B", file.read(1))[0]
-					entry_count = struct.unpack(">I", file.read(4))[0]
-					columns = []
-
-					for i in range(0, attribute_count, 1):
-						typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
-						name_length = struct.unpack(">H", file.read(2))[0]
-						attribute_name = file.read(name_length).decode("utf-8")
-						columns.append([attribute_name, typ])
-					
-					for i in range(0, entry_count, 1):
-						key = None
-						if key_ident == DB_Str.DB_IDENT:
-							key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
-						else:
+						for i in range(0, attribute_count, 1):
+							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+							name_length = struct.unpack(">H", file.read(2))[0]
+							attribute_name = file.read(name_length).decode("utf-8")
+							columns.append([attribute_name, typ])
+						
+						for i in range(0, entry_count, 1):
 							key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
-						values = {}
-						for k in range(0, attribute_count):
-							value = None
-							if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
-								length = struct.unpack(">I", file.read(4))[0]
-								value = file.read(length).decode("utf-8")
+							values = {}
+							for k in range(0, attribute_count):
+								value = None
+								if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
+									length = struct.unpack(">I", file.read(4))[0]
+									value = file.read(length).decode("utf-8")
+									values[columns[k][0]] = value
+									continue
+								value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
 								values[columns[k][0]] = value
-								continue
-							elif columns[k][1].DB_IDENT == DB_Array.DB_IDENT:
-								array_length = struct.unpack(">I", file.read(4))[0]
-								array_type = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
-								array_values = []
-								if array_type.DB_IDENT == DB_Str.DB_IDENT:
-									for i in range(0, array_length):
-										string_length = struct.unpack(">I", file.read(4))[0]
-										array_values.append(DB_Str(file.read(string_length).decode("utf-8")))
-								else:
-									for i in range(0, array_length):
-										array_values.append(array_type(struct.unpack(array_type.FORMAT, file.read(array_type().getAllocation()[0]))[0]))
-								values[columns[k][0]] = array_values
-								continue
-							value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
-							values[columns[k][0]] = value
-						self.insert(table_index, table.object(**values))
+							self.insert(table_index, table.object(**values))
+				elif version == 2:
+					table_count = struct.unpack(">I", file.read(4))[0]
+					if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
+						raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
+					date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
+					data_ident = file.read(len(DATA_IDENT))
+					for i in range(0, table_count, 1):
+						table_index = struct.unpack(">I", file.read(4))[0]
+						table = self.get_table(table_index)
+						key_ident = struct.unpack(">B", file.read(1))[0]
+						key_type = DB_Value.getType(key_ident)
+						key_length = struct.unpack(">H", file.read(2))[0]
+						key_name = file.read(key_length).decode("utf-8")
+						if table.key_name != key_name:
+							raise Exception("Format Error. Table has wrong key name")
+
+						attribute_count = struct.unpack(">B", file.read(1))[0]
+						entry_count = struct.unpack(">I", file.read(4))[0]
+						columns = []
+
+						for i in range(0, attribute_count, 1):
+							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+							name_length = struct.unpack(">H", file.read(2))[0]
+							attribute_name = file.read(name_length).decode("utf-8")
+							columns.append([attribute_name, typ])
+						
+						for i in range(0, entry_count, 1):
+							key = None
+							if key_ident == DB_Str.DB_IDENT:
+								key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
+							else:
+								key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
+							values = {}
+							for k in range(0, attribute_count):
+								value = None
+								if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
+									length = struct.unpack(">I", file.read(4))[0]
+									value = file.read(length).decode("utf-8")
+									values[columns[k][0]] = value
+									continue
+								elif columns[k][1].DB_IDENT == DB_Array.DB_IDENT:
+									array_length = struct.unpack(">I", file.read(4))[0]
+									array_type = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+									array_values = []
+									if array_type.DB_IDENT == DB_Str.DB_IDENT:
+										for i in range(0, array_length):
+											string_length = struct.unpack(">I", file.read(4))[0]
+											array_values.append(DB_Str(file.read(string_length).decode("utf-8")))
+									else:
+										for i in range(0, array_length):
+											array_values.append(array_type(struct.unpack(array_type.FORMAT, file.read(array_type().getAllocation()[0]))[0]))
+									values[columns[k][0]] = array_values
+									continue
+								value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
+								values[columns[k][0]] = value
+							self.insert(table_index, table.object(**values))
+		except FileNotFoundError:
+			self.save()
