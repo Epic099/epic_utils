@@ -58,7 +58,7 @@ class DBTable:
 		if getattr(type(key), "FORMAT", -1) == -1 or type(key).DB_IDENT != self.key_type.DB_IDENT:
 			raise IndexError("Invalid key")
 		if key.get() not in self.values.keys():
-			return
+			return None
 		return self.values[key.get()]
 		
 class Database():
