@@ -1,6 +1,7 @@
 import struct
 from .datatype import DB_Str, DB_Array, DB_Value, DB_UInt
 from datetime import datetime
+from enum import Enum
 
 MAGICNUMBER = "EPDB".encode("utf-8")
 HEADER_IDENT = "HEAD".encode("utf-8")
@@ -8,8 +9,20 @@ DATA_IDENT = "DATA".encode("utf-8")
 END_IDENT = "STOP".encode("utf-8")
 DATEFORMAT = "%d%m%Y%H%M"
 FORMAT_VERSION = 2 #Version 1 is simple format with only basic data types. Version 2 allows for more complex data types like arrays
+
+class FilterType(Enum):
+    NONE = 0
+    EQUALS = 1
+    GREATER = 2
+    GREATER_EQUAL = 3
+    LESS = 4
+    LESS_EQUAL = 5
+    CONTAINS = 6
+    CONTAINS_LOWER = 7 # ignores capitalization
+    AND = 8
+    OR = 9
 		
-class DBObject:
+class DB_Object:
 	def __init__(self):
 		pass
 		
@@ -32,7 +45,36 @@ class DBObject:
 				#Not a valid value to store
 		return result
 
-class DBTable:
+class DB_FilterRule():
+	def __init__(self, value_name: str, compare_value, compare_rule: FilterType):
+		if compare_rule not in [FilterType.LESS, FilterType.LESS_EQUAL, FilterType.EQUALS, FilterType.GREATER, FilterType.GREATER_EQUAL, FilterType.CONTAINS, FilterType.CONTAINS_LOWER]:
+			raise Exception("Invalid filter compare type")
+		self.value_name = value_name
+		self.compare_value = compare_value
+		self.type = compare_rule
+		if (self.type == FilterType.CONTAINS or self.type == FilterType.CONTAINS_LOWER) and not isinstance(self.compare_value, str):
+			raise Exception("compare value must be a string")
+		if self.type == FilterType.CONTAINS_LOWER:
+			self.compare_value = self.compare_value.lower()
+        
+	def compare(self, value):
+		if self.type == FilterType.EQUALS:
+			return value == self.compare_value
+		elif self.type == FilterType.GREATER:
+			return value > self.compare_value
+		elif self.type == FilterType.GREATER_EQUAL:
+			return value >= self.compare_value
+		elif self.type == FilterType.LESS:
+			return value < self.compare_value
+		elif self.type == FilterType.LESS_EQUAL:
+			return value <= self.compare_value
+		elif self.type == FilterType.CONTAINS and isinstance(value, str):
+			return True if str.find(value, self.compare_value) >= 0 else False
+		elif self.type == FilterType.CONTAINS_LOWER and isinstance(value, str):
+			return True if str.find(value.lower(), self.compare_value) >= 0 else False
+		return False
+
+class DB_Table:
 	def __init__(self, index, key_name, object):
 		self.index = index
 		self.key_name = key_name
@@ -41,6 +83,7 @@ class DBTable:
 		
 		self.key_type = type(getattr(_object, self.key_name))
 		_values = _object.get_values()
+		self.value_names = [temp[0] for temp in _values]
 		self.columns = [[temp[0], temp[1].DB_IDENT] for temp in _values] # [name, type]
 		
 		self.values = {}
@@ -60,13 +103,34 @@ class DBTable:
 		if key.get() not in self.values.keys():
 			return None
 		return self.values[key.get()]
+
+	def get_all(self):
+		return list(self.values.items())
+
+	def filter(self, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR):
+		if filter_combine not in [FilterType.OR, FilterType.AND]:
+			raise Exception("Invalid filter combine type")
+		#validating filters
+		for filter in filters:
+			if filter.value_name not in self.value_names:
+				raise Exception("invalid filters")
+		result = []
+		for key, value in self.values.items():
+			filter_result = [filter.compare(getattr(value, filter.value_name).get()) for filter in filters]
+			if filter_combine == FilterType.AND and all(filter_result):
+				result.append(value)
+				continue
+			if filter_combine == FilterType.OR and any(filter_result):
+				result.append(value)
+				continue
+		return result
 		
 class Database():
 	def __init__(self, filename, FORMAT = FORMAT_VERSION):
 		if(FORMAT < 1 or FORMAT > FORMAT_VERSION or not isinstance(FORMAT, int)):
 			raise ValueError("Invalid Database format")
 		self.format = FORMAT
-		self.tables: list[DBTable] = []
+		self.tables: list[DB_Table] = []
 		self.filename = filename
 
 	def get_table(self, index: int):
@@ -86,11 +150,23 @@ class Database():
 			raise Exception("Table index does not exist")
 		return table.get(key)
 
+	def get_all(self, table_index: int):
+		table = self.get_table(table_index)
+		if table == None:
+			raise Exception("Table index does not exist")
+		return table.get_all()
+
+	def filter(self, table_index: int, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR):
+		table = self.get_table(table_index)
+		if table == None:
+			raise Exception("Table index does not exist")
+		return table.filter(filters, filter_combine=filter_combine)
+
 	def register_table(self, index: int, key_name: str, object: any):
 		for table in self.tables:
 			if table.index == index:
 				raise IndexError("Table indices must be unique")
-		self.tables.append(DBTable(index, key_name, object))
+		self.tables.append(DB_Table(index, key_name, object))
 	
 	def save(self):
 		#struct types (for myself because i cant f*cking remember, B = 1Byte, H = 2Bytes. I=4Bytes)

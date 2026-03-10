@@ -7,7 +7,7 @@ authors = [
     {name="Epic099"}
 ]
 name = "epic-utils"
-version = "0.4.7.2"
+version = "0.4.8"
 requires-python = ">= 3.8"
 dependencies = [
     "pygame",
