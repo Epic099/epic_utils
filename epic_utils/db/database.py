@@ -150,6 +150,24 @@ class DB_RAWTable:
         
 	def get_all(self):
 		return list(self.values.items())
+
+	def filter(self, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR):
+		if filter_combine not in [FilterType.OR, FilterType.AND]:
+			raise Exception("Invalid filter combine type")
+		#validating filters
+		for filter in filters:
+			if filter.value_name not in self.value_names:
+				raise Exception("invalid filters")
+		result = []
+		for key, value in self.values.items():
+			filter_result = [filter.compare(value[filter.value_name].get()) for filter in filters]
+			if filter_combine == FilterType.AND and all(filter_result):
+				result.append(value)
+				continue
+			if filter_combine == FilterType.OR and any(filter_result):
+				result.append(value)
+				continue
+		return result
 		
 class Database():
 	def __init__(self, filename, FORMAT = FORMAT_VERSION):
@@ -187,8 +205,8 @@ class Database():
 			raise Exception("Table index does not exist")
 		return table.get_all()
 
-	def filter(self, table_index: int, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR):
-		table = self.get_table(table_index)
+	def filter(self, table_index: int, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR, raw=False):
+		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.filter(filters, filter_combine=filter_combine)
