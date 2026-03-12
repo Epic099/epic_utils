@@ -20,6 +20,9 @@ class DB_Value:
 			if type.DB_IDENT == ident:
 				return type
 
+	def __repr__(self):
+		return f"{type(self).__name__}({self.get()})"
+
 	def __str__(self):
 		return f"{type(self).__name__}({self.get()})"
 

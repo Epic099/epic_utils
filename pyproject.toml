@@ -7,7 +7,7 @@ authors = [
     {name="Epic099"}
 ]
 name = "epic-utils"
-version = "0.4.8"
+version = "0.4.9"
 requires-python = ">= 3.8"
 dependencies = [
     "pygame",
@@ -19,3 +19,4 @@ dependencies = [
 license = "MIT"
 description = "A simple package that I am creating overtime. It includes tools for pygame, mathematics, roblox or debuging. The package is being upgraded over time."
 readme = "README.md"
+

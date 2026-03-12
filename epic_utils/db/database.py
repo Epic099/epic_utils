@@ -124,6 +124,32 @@ class DB_Table:
 				result.append(value)
 				continue
 		return result
+
+class DB_RAWTable:
+	def __init__(self, index, key_name, key_type, columns):
+		self.index = index
+		self.key_name = key_name
+		self.key_type = key_type
+		self.columns = columns
+		self.values = {}
+        
+	def insert(self, value):
+		if not isinstance(value, dict):
+			raise ValueError("Invalid value type")
+		if not self.key_name in value.keys():
+			raise ValueError("Invalid key")
+		key = value[self.key_name]
+		self.values[key.get()] = value
+            
+	def get(self, key: DB_Value):
+		if getattr(type(key), "FORMAT", -1) == -1 or type(key).DB_IDENT != self.key_type.DB_IDENT:
+			raise IndexError("Invalid key")
+		if key.get() not in self.values.keys():
+			return None
+		return self.values[key.get()]
+        
+	def get_all(self):
+		return list(self.values.items())
 		
 class Database():
 	def __init__(self, filename, FORMAT = FORMAT_VERSION):
@@ -131,27 +157,32 @@ class Database():
 			raise ValueError("Invalid Database format")
 		self.format = FORMAT
 		self.tables: list[DB_Table] = []
+		self.raw_tables: list[DB_RAWTable] = []
 		self.filename = filename
 
 	def get_table(self, index: int):
 		for table in self.tables:
 			if table.index == index:
 				return table
+
+	def _get_rawtable(self, index: int):
+		for table in self.raw_tables:
+			if table.index == index:
+				return table
 	
-	def insert(self, table_index, object):
-		table = self.get_table(table_index)
+	def insert(self, table_index, object, raw=False):
+		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
 		if table == None:
 			raise IndexError("Table index doesnt exist")
 		table.insert(object)
-
-	def get(self, table_index: int, key: DB_Value):
-		table = self.get_table(table_index)
+	def get(self, table_index: int, key: DB_Value, raw=False):
+		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.get(key)
 
-	def get_all(self, table_index: int):
-		table = self.get_table(table_index)
+	def get_all(self, table_index: int, raw=False):
+		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.get_all()
@@ -167,6 +198,9 @@ class Database():
 			if table.index == index:
 				raise IndexError("Table indices must be unique")
 		self.tables.append(DB_Table(index, key_name, object))
+
+	def _register_rawtable(self, index: int, key_name: str, key_type: DB_Value, columns):
+		self.raw_tables.append(DB_RAWTable(index, key_name, key_type, columns))
 	
 	def save(self):
 		#struct types (for myself because i cant f*cking remember, B = 1Byte, H = 2Bytes. I=4Bytes)
@@ -218,6 +252,55 @@ class Database():
 							file.write(getattr(object, col[0]).getBytes()) # value of each coloumn (also no variable length now)
 			file.write(END_IDENT)
 			
+	def saveRAW(self):
+		#struct types (for myself because i cant f*cking remember, B = 1Byte, H = 2Bytes. I=4Bytes)
+		with open(self.filename, "wb") as file:
+			file.write(MAGICNUMBER) # identify file type
+			file.write(struct.pack(">B", 0)) #Space
+			file.write(HEADER_IDENT) # header
+			file.write(struct.pack(">B", FORMAT_VERSION)) #format version (current v = 2)	
+			self.format =  FORMAT_VERSION
+			file.write(struct.pack(">I", len(self.raw_tables))) #table count
+			file.write(datetime.now().strftime(DATEFORMAT).encode("utf-8")) # save time
+			
+			file.write(DATA_IDENT) # data
+			
+			for table in self.raw_tables:
+				file.write(struct.pack(">I", table.index)) # table index -> later used to identify tables
+				file.write(struct.pack(">B", table.key_type.DB_IDENT)) #key type
+				file.write(struct.pack(">H", len(table.key_name))) # key length (maybe change to 1 Byte length?)
+				file.write(table.key_name.encode("utf-8")) # key name
+				file.write(struct.pack(">B", len(table.columns))) # number of attributes				
+				file.write(struct.pack(">I", len(table.values.keys()))) # number of entries
+				for col in table.columns:
+					file.write(struct.pack(">B", col[1].DB_IDENT)) # attribute type
+					file.write(struct.pack(">H", len(col[0]))) # name length of attribute (maybe also change to 1 Byte?)
+					file.write(col[0].encode("utf-8")) # attribute name
+				for key in table.values.keys():
+					if table.key_type.DB_IDENT == DB_Str.DB_IDENT:
+						file.write(struct.pack(">I", len(key)))
+						file.write(key.encode("utf-8"))
+					else:
+						file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
+					object = table.values[key]
+					for col in table.columns:
+						if col[1].DB_IDENT == DB_Str.DB_IDENT:
+							file.write(struct.pack(">I", object[col[0]].getAllocation()[0])) # value length
+							file.write(object[col[0]].getBytes())
+						elif col[1].DB_IDENT == DB_Array.DB_IDENT:
+							arr = object[col[0]]
+							file.write(struct.pack(">I", arr.length)) # Length of Array
+							file.write(struct.pack(">B", arr.typ.DB_IDENT))
+							if arr.typ.DB_IDENT == DB_Str.DB_IDENT:
+								for i in range(0, arr.length):
+									file.write(struct.pack(">I", arr[i].getAllocation()[0]))
+									file.write(arr[i].getBytes())
+							else:
+								for i in range(0, arr.length):
+									file.write(arr[i].getBytes())
+						else:
+							file.write(object[col[0]].getBytes()) # value of each coloumn (also no variable length now)
+   
 	def read(self):
 		for table in self.tables:
 			table.values = {}
@@ -263,7 +346,7 @@ class Database():
 							if key_ident == DB_Str.DB_IDENT:
 								key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
 							else:
-								key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))
+								key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))[0]
 							values = {}
 							for k in range(0, attribute_count):
 								value = None
@@ -293,3 +376,75 @@ class Database():
 		except FileNotFoundError:
 			self.save()
    
+	def readRAW(self):
+		self.raw_tables = []
+		try:
+			with open(self.filename, "rb") as file:
+				magic = file.read(len(MAGICNUMBER))
+				if magic != MAGICNUMBER:
+					raise Exception("Wrong file type")
+				file.read(1) # space
+				head_ident = file.read(len(HEADER_IDENT))
+				if head_ident != HEADER_IDENT:
+					raise Exception("Corrupted File header")
+				version = struct.unpack(">B", file.read(1))[0]
+				if version == 2:
+					table_count = struct.unpack(">I", file.read(4))[0]
+					date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
+					data_ident = file.read(len(DATA_IDENT))
+					if data_ident != DATA_IDENT:
+						raise Exception("Corrupted File data")
+					for i in range(0, table_count, 1):
+						table_index = struct.unpack(">I", file.read(4))[0]
+						key_ident = struct.unpack(">B", file.read(1))[0]
+						key_type = DB_Value.getType(key_ident)
+						key_length = struct.unpack(">H", file.read(2))[0]
+						key_name = file.read(key_length).decode("utf-8")
+
+
+						attribute_count = struct.unpack(">B", file.read(1))[0]
+						entry_count = struct.unpack(">I", file.read(4))[0]
+						columns = []
+						for i in range(0, attribute_count, 1):
+							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+							name_length = struct.unpack(">H", file.read(2))[0]
+							attribute_name = file.read(name_length).decode("utf-8")
+							columns.append([attribute_name, typ])
+						self._register_rawtable(table_index, key_name, key_type, columns)
+						for i in range(0, entry_count, 1):
+								key = None
+								if key_ident == DB_Str.DB_IDENT:
+									key = file.read(struct.unpack(">I", file.read(4))[0]).decode("utf-8")
+								else:
+									key = struct.unpack(key_type.FORMAT, file.read(key_type().getAllocation()[0]))[0]
+								values = {}
+								for k in range(0, attribute_count):
+									value = None
+									if columns[k][1].DB_IDENT == DB_Str.DB_IDENT:
+										length = struct.unpack(">I", file.read(4))[0]
+										value = file.read(length).decode("utf-8")
+										values[columns[k][0]] = DB_Str(value=value)
+										continue
+									elif columns[k][1].DB_IDENT == DB_Array.DB_IDENT:
+										array_length = struct.unpack(">I", file.read(4))[0]
+										array_type = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
+										array_values = []
+										if array_type.DB_IDENT == DB_Str.DB_IDENT:
+											for i in range(0, array_length):
+												string_length = struct.unpack(">I", file.read(4))[0]
+												array_values.append(DB_Str(file.read(string_length).decode("utf-8")))
+										else:
+											for i in range(0, array_length):
+												array_values.append(array_type(struct.unpack(array_type.FORMAT, file.read(array_type().getAllocation()[0]))[0]))
+										values[columns[k][0]] = DB_Array(array_type, values=array_values)
+										continue
+									value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
+									values[columns[k][0]] = columns[k][1](value)
+								self.insert(table_index, values, raw=True)
+		except FileNotFoundError:
+			print("Cannot initialize file in raw mode")
+    
+       
+    
+	
+    
