@@ -8,7 +8,7 @@ HEADER_IDENT = "HEAD".encode("utf-8")
 DATA_IDENT = "DATA".encode("utf-8")
 END_IDENT = "STOP".encode("utf-8")
 DATEFORMAT = "%d%m%Y%H%M"
-FORMAT_VERSION = 2 #Version 1 is simple format with only basic data types. Version 2 allows for more complex data types like arrays
+FORMAT_VERSION = 3 #Version 1 is simple format with only basic data types. Version 2 allows for more complex data types like arrays. Version 3 introduced table ids to better identify tables
 
 class FilterType(Enum):
     NONE = 0
@@ -75,8 +75,9 @@ class DB_FilterRule():
 		return False
 
 class DB_Table:
-	def __init__(self, index, key_name, object):
+	def __init__(self, index: int, id: str, key_name: str, object):
 		self.index = index
+		self.id = id
 		self.key_name = key_name
 		self.object = object
 		_object = object()
@@ -126,8 +127,9 @@ class DB_Table:
 		return result
 
 class DB_RAWTable:
-	def __init__(self, index, key_name, key_type, columns):
+	def __init__(self, index: int, id: str, key_name: str, key_type: DB_Value, columns):
 		self.index = index
+		self.id = id
 		self.key_name = key_name
 		self.key_type = key_type
 		self.columns = columns
@@ -178,47 +180,60 @@ class Database():
 		self.raw_tables: list[DB_RAWTable] = []
 		self.filename = filename
 
-	def get_table(self, index: int):
-		for table in self.tables:
-			if table.index == index:
-				return table
+	def get_table(self, index_or_id: int|str, raw=False):
+		if raw == False:
+			for table in self.tables:
+				if table.index == index_or_id or table.id == index_or_id:
+					return table
+		else:
+			for table in self.raw_tables:
+				if table.index == index_or_id or table.id == index_or_id:
+					return table
+ 
+	def get_all_tables(self, raw=False):
+		if raw == False:
+			return self.tables
+		else:
+			return self.raw_tables
 
-	def _get_rawtable(self, index: int):
-		for table in self.raw_tables:
-			if table.index == index:
-				return table
+	def get_all_table_ids(self, raw=False):
+		result = [table.id for table in self.tables] if raw == False else [table.id for table in self.raw_tables]
+		return result
 	
 	def insert(self, table_index, object, raw=False):
-		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
+		table = self.get_table(table_index, raw=raw)
 		if table == None:
 			raise IndexError("Table index doesnt exist")
 		table.insert(object)
 	def get(self, table_index: int, key: DB_Value, raw=False):
-		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
+		table = self.get_table(table_index, raw=raw)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.get(key)
 
 	def get_all(self, table_index: int, raw=False):
-		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
+		table = self.get_table(table_index, raw=raw)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.get_all()
 
 	def filter(self, table_index: int, filters: list[DB_FilterRule], filter_combine: FilterType = FilterType.OR, raw=False):
-		table = self.get_table(table_index) if raw == False else self._get_rawtable(table_index)
+		table = self.get_table(table_index, raw=raw)
 		if table == None:
 			raise Exception("Table index does not exist")
 		return table.filter(filters, filter_combine=filter_combine)
 
-	def register_table(self, index: int, key_name: str, object: any):
+	def register_table(self, index: int, id: str, key_name: str, object: any):
 		for table in self.tables:
-			if table.index == index:
-				raise IndexError("Table indices must be unique")
-		self.tables.append(DB_Table(index, key_name, object))
+			if table.index == index or table.id == id:
+				raise IndexError("Table indices and identifiers must be unique")
+		self.tables.append(DB_Table(index, id, key_name, object))
 
-	def _register_rawtable(self, index: int, key_name: str, key_type: DB_Value, columns):
-		self.raw_tables.append(DB_RAWTable(index, key_name, key_type, columns))
+	def _register_rawtable(self, index: int, id: str, key_name: str, key_type: DB_Value, columns):
+		for table in self.raw_tables:
+			if table.index == index or table.id == id:
+				raise IndexError("Table indices and identifiers must be unique")
+		self.raw_tables.append(DB_RAWTable(index, id, key_name, key_type, columns))
 	
 	def save(self):
 		#struct types (for myself because i cant f*cking remember, B = 1Byte, H = 2Bytes. I=4Bytes)
@@ -235,6 +250,8 @@ class Database():
 			
 			for table in self.tables:
 				file.write(struct.pack(">I", table.index)) # table index -> later used to identify tables
+				file.write(struct.pack(">I", len(table.id)))
+				file.write(table.id.encode("utf-8"))
 				file.write(struct.pack(">B", table.key_type.DB_IDENT)) #key type
 				file.write(struct.pack(">H", len(table.key_name))) # key length (maybe change to 1 Byte length?)
 				file.write(table.key_name.encode("utf-8")) # key name
@@ -285,6 +302,8 @@ class Database():
 			
 			for table in self.raw_tables:
 				file.write(struct.pack(">I", table.index)) # table index -> later used to identify tables
+				file.write(struct.pack(">I", len(table.id))) # table id/name
+				file.write(table.id.encode("utf-8"))
 				file.write(struct.pack(">B", table.key_type.DB_IDENT)) #key type
 				file.write(struct.pack(">H", len(table.key_name))) # key length (maybe change to 1 Byte length?)
 				file.write(table.key_name.encode("utf-8")) # key name
@@ -332,7 +351,7 @@ class Database():
 				if head_ident != HEADER_IDENT:
 					raise Exception("Corrupted File header")
 				version = struct.unpack(">B", file.read(1))[0]
-				if version == 2:
+				if version == 3:
 					table_count = struct.unpack(">I", file.read(4))[0]
 					if table_count != len(self.tables): # maybe remove later so more tables can be added after a file has been created
 						raise Exception(f"Tables not correctly initialized. Expected {table_count} table{'s' if table_count > 1 else ''} got {len(self.tables)}")
@@ -342,6 +361,8 @@ class Database():
 						raise Exception("Corrupted File data")
 					for i in range(0, table_count, 1):
 						table_index = struct.unpack(">I", file.read(4))[0]
+						table_id_len = struct.unpack(">I", file.read(4))[0]
+						table_id = file.read(table_id_len).decode("utf-8")
 						table = self.get_table(table_index)
 						key_ident = struct.unpack(">B", file.read(1))[0]
 						key_type = DB_Value.getType(key_ident)
@@ -406,7 +427,7 @@ class Database():
 				if head_ident != HEADER_IDENT:
 					raise Exception("Corrupted File header")
 				version = struct.unpack(">B", file.read(1))[0]
-				if version == 2:
+				if version == 3:
 					table_count = struct.unpack(">I", file.read(4))[0]
 					date = datetime.strptime(file.read(12).decode("utf-8"), DATEFORMAT)
 					data_ident = file.read(len(DATA_IDENT))
@@ -414,6 +435,8 @@ class Database():
 						raise Exception("Corrupted File data")
 					for i in range(0, table_count, 1):
 						table_index = struct.unpack(">I", file.read(4))[0]
+						table_id_len = struct.unpack(">I", file.read(4))[0]
+						table_id = file.read(table_id_len).decode("utf-8")
 						key_ident = struct.unpack(">B", file.read(1))[0]
 						key_type = DB_Value.getType(key_ident)
 						key_length = struct.unpack(">H", file.read(2))[0]
@@ -428,7 +451,7 @@ class Database():
 							name_length = struct.unpack(">H", file.read(2))[0]
 							attribute_name = file.read(name_length).decode("utf-8")
 							columns.append([attribute_name, typ])
-						self._register_rawtable(table_index, key_name, key_type, columns)
+						self._register_rawtable(table_index, table_id, key_name, key_type, columns)
 						for i in range(0, entry_count, 1):
 								key = None
 								if key_ident == DB_Str.DB_IDENT:
