@@ -3,6 +3,7 @@ import sys
 import os
 import itertools
 import threading
+from readchar import readkey, key
 
 from colorama import Fore, Back, Style
 from enum import Enum
@@ -96,3 +97,27 @@ class StatusText:
     def setState(self, state: STATE):
         self.state = state
 
+class TextSelect:
+    def __init__(self, options: list|tuple):
+        self.options = options
+        self.selected = 0
+    def print_options(self):
+        for i in range(0, len(self.options)):
+                color = Fore.WHITE if i != self.selected else Fore.RED
+                print(color + f"{' > ' if self.selected == i else '   '}({i}) {self.options[i]}" + Style.RESET_ALL)
+        print(f"\033[{len(self.options)}A", end="")
+    def select(self):
+        print("Select One of the Options(Change selection with <UP>/<DOWN>. Select with <SPACE>)")
+        self.print_options()
+        while True:
+            k = readkey()
+            if k == key.UP:
+                self.selected -= 1
+            if k == key.DOWN:
+                self.selected += 1
+            self.selected = max(0, min(self.selected, len(self.options)-1))
+            if k == key.SPACE:
+                print("\n\n\n")
+                return self.options[self.selected]
+            self.print_options()
+            time.sleep(0.05)

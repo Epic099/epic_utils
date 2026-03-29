@@ -1,3 +1,4 @@
+readchar
 pygame
 requests
 numpy
