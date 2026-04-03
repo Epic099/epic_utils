@@ -133,7 +133,6 @@ class DB_RAWTable:
 		self.key_name = key_name
 		self.key_type = key_type
 		self.columns = [[temp[0], temp[1].DB_IDENT] for temp in columns]
-		self.columns = columns
 		self.values = {}
         
 	def insert(self, value):
