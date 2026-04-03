@@ -310,7 +310,7 @@ class Database():
 				file.write(struct.pack(">B", len(table.columns))) # number of attributes				
 				file.write(struct.pack(">I", len(table.values.keys()))) # number of entries
 				for col in table.columns:
-					file.write(struct.pack(">B", col[1].DB_IDENT)) # attribute type
+					file.write(struct.pack(">B", col[1])) # attribute type
 					file.write(struct.pack(">H", len(col[0]))) # name length of attribute (maybe also change to 1 Byte?)
 					file.write(col[0].encode("utf-8")) # attribute name
 				for key in table.values.keys():
@@ -450,7 +450,7 @@ class Database():
 							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
 							name_length = struct.unpack(">H", file.read(2))[0]
 							attribute_name = file.read(name_length).decode("utf-8")
-							columns.append([attribute_name, typ])
+							columns.append([attribute_name, typ.DB_IDENT])
 						self._register_rawtable(table_index, table_id, key_name, key_type, columns)
 						for i in range(0, entry_count, 1):
 								key = None
