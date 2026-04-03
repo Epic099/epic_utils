@@ -132,6 +132,7 @@ class DB_RAWTable:
 		self.id = id
 		self.key_name = key_name
 		self.key_type = key_type
+		self.columns = [[temp[0], temp[1].DB_IDENT] for temp in columns]
 		self.columns = columns
 		self.values = {}
         
@@ -450,7 +451,7 @@ class Database():
 							typ = DB_Value.getType(struct.unpack(">B", file.read(1))[0])
 							name_length = struct.unpack(">H", file.read(2))[0]
 							attribute_name = file.read(name_length).decode("utf-8")
-							columns.append([attribute_name, typ.DB_IDENT])
+							columns.append([attribute_name, typ])
 						self._register_rawtable(table_index, table_id, key_name, key_type, columns)
 						for i in range(0, entry_count, 1):
 								key = None
