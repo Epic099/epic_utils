@@ -22,7 +22,7 @@ class FilterType(Enum):
     AND = 8
     OR = 9
 		
-class DB_Object:
+class DB_obj:
 	def __init__(self):
 		pass
 		
@@ -75,28 +75,35 @@ class DB_FilterRule():
 		return False
 
 class DB_Table:
-	def __init__(self, index: int, id: str, key_name: str, object):
+	def __init__(self, index: int, id: str, key_name: str, obj):
 		self.index = index
 		self.id = id
 		self.key_name = key_name
-		self.object = object
-		_object = object()
+		self.obj = obj
+		_obj = obj()
 		
-		self.key_type = type(getattr(_object, self.key_name))
-		_values = _object.get_values()
+		self.key_type = type(getattr(_obj, self.key_name))
+		_values = _obj.get_values()
 		self.value_names = [temp[0] for temp in _values]
 		self.columns = [[temp[0], temp[1].DB_IDENT] for temp in _values] # [name, type]
 		
 		self.values = {}
 		
-	def insert(self, object):
-		if not isinstance(object, self.object):
-			raise TypeError(f"Invalid type. Expected <{self.object.__name__}> got <{type(object).__name__}>")
-			#return # can only store provided objects
-		key = getattr(object, self.key_name)
+	def insert(self, obj):
+		if not isinstance(obj, self.obj):
+			raise TypeError(f"Invalid type. Expected <{self.obj.__name__}> got <{type(obj).__name__}>")
+			#return # can only store provided objs
+		key = getattr(obj, self.key_name)
 		if key.get() in self.values.keys():
 			raise IndexError(f"Key already exists in table")
-		self.values[key.get()] = object
+		self.values[key.get()] = obj
+
+	def update(self, obj):
+		if not isinstance(obj, self.obj):
+			raise TypeError(f"Invalid type. Expected <{self.obj.__name__}> got <{type(obj).__name__}>")
+			#return # can only store provided objs
+		key = getattr(obj, self.key_name)
+		self.values[key.get()] = obj
 
 	def get(self, key):
 		if getattr(type(key), "FORMAT", -1) == -1 or type(key).DB_IDENT != self.key_type.DB_IDENT:
@@ -141,6 +148,16 @@ class DB_RAWTable:
 		if not self.key_name in value.keys():
 			raise ValueError("Invalid key")
 		key = value[self.key_name]
+		if key.get() in self.values.keys():
+			raise IndexError(f"Key already exists in table")
+		self.values[key.get()] = value
+
+	def update(self, value):
+		if not isinstance(value, dict):
+			raise ValueError("Invalid value type")
+		if not self.key_name in value.keys():
+			raise ValueError("Invalid key")
+		key = value[self.key_name]
 		self.values[key.get()] = value
             
 	def get(self, key: DB_Value):
@@ -180,7 +197,7 @@ class Database():
 		self.raw_tables: list[DB_RAWTable] = []
 		self.filename = filename
 
-	def get_table(self, index_or_id: int|str, raw=False):
+	def get_table(self, index_or_id: int|str, raw=False) -> DB_Table|DB_RAWTable:
 		if raw == False:
 			for table in self.tables:
 				if table.index == index_or_id or table.id == index_or_id:
@@ -190,21 +207,28 @@ class Database():
 				if table.index == index_or_id or table.id == index_or_id:
 					return table
  
-	def get_all_tables(self, raw=False):
+	def get_all_tables(self, raw=False) -> list[DB_Table]|list[DB_RAWTable]:
 		if raw == False:
 			return self.tables
 		else:
 			return self.raw_tables
 
-	def get_all_table_ids(self, raw=False):
+	def get_all_table_ids(self, raw=False) -> list[str]:
 		result = [table.id for table in self.tables] if raw == False else [table.id for table in self.raw_tables]
 		return result
 	
-	def insert(self, table_index, object, raw=False):
+	def insert(self, table_index, obj, raw=False):
 		table = self.get_table(table_index, raw=raw)
 		if table == None:
 			raise IndexError("Table index doesnt exist")
-		table.insert(object)
+		table.insert(obj)
+
+	def update(self, table_index, obj, raw=False):
+		table = self.get_table(table_index, raw=raw)
+		if table == None:
+			raise IndexError("Table index doesnt exist")
+		table.update(obj)
+
 	def get(self, table_index: int, key: DB_Value, raw=False):
 		table = self.get_table(table_index, raw=raw)
 		if table == None:
@@ -223,11 +247,11 @@ class Database():
 			raise Exception("Table index does not exist")
 		return table.filter(filters, filter_combine=filter_combine)
 
-	def register_table(self, index: int, id: str, key_name: str, object: any):
+	def register_table(self, index: int, id: str, key_name: str, obj: any):
 		for table in self.tables:
 			if table.index == index or table.id == id:
 				raise IndexError("Table indices and identifiers must be unique")
-		self.tables.append(DB_Table(index, id, key_name, object))
+		self.tables.append(DB_Table(index, id, key_name, obj))
 
 	def _register_rawtable(self, index: int, id: str, key_name: str, key_type: DB_Value, columns):
 		for table in self.raw_tables:
@@ -267,13 +291,13 @@ class Database():
 						file.write(key.encode("utf-8"))
 					else:
 						file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
-					object = table.values[key]
+					obj = table.values[key]
 					for col in table.columns:
 						if col[1] == DB_Str.DB_IDENT:
-							file.write(struct.pack(">I", getattr(object, col[0]).getAllocation()[0])) # value length
-							file.write(getattr(object, col[0]).getBytes())
+							file.write(struct.pack(">I", getattr(obj, col[0]).getAllocation()[0])) # value length
+							file.write(getattr(obj, col[0]).getBytes())
 						elif col[1] == DB_Array.DB_IDENT:
-							arr = getattr(object, col[0])
+							arr = getattr(obj, col[0])
 							file.write(struct.pack(">I", arr.length)) # Length of Array
 							file.write(struct.pack(">B", arr.typ.DB_IDENT))
 							if arr.typ.DB_IDENT == DB_Str.DB_IDENT:
@@ -284,7 +308,7 @@ class Database():
 								for i in range(0, arr.length):
 									file.write(arr[i].getBytes())
 						else:
-							file.write(getattr(object, col[0]).getBytes()) # value of each coloumn (also no variable length now)
+							file.write(getattr(obj, col[0]).getBytes()) # value of each coloumn (also no variable length now)
 			file.write(END_IDENT)
 			
 	def saveRAW(self):
@@ -319,13 +343,13 @@ class Database():
 						file.write(key.encode("utf-8"))
 					else:
 						file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
-					object = table.values[key]
+					obj = table.values[key]
 					for col in table.columns:
 						if col[1] == DB_Str.DB_IDENT:
-							file.write(struct.pack(">I", object[col[0]].getAllocation()[0])) # value length
-							file.write(object[col[0]].getBytes())
+							file.write(struct.pack(">I", obj[col[0]].getAllocation()[0])) # value length
+							file.write(obj[col[0]].getBytes())
 						elif col[1] == DB_Array.DB_IDENT:
-							arr = object[col[0]]
+							arr = obj[col[0]]
 							file.write(struct.pack(">I", arr.length)) # Length of Array
 							file.write(struct.pack(">B", arr.typ.DB_IDENT))
 							if arr.typ.DB_IDENT == DB_Str.DB_IDENT:
@@ -336,7 +360,7 @@ class Database():
 								for i in range(0, arr.length):
 									file.write(arr[i].getBytes())
 						else:
-							file.write(object[col[0]].getBytes()) # value of each coloumn (also no variable length now)
+							file.write(obj[col[0]].getBytes()) # value of each coloumn (also no variable length now)
    
 	def read(self):
 		for table in self.tables:
@@ -409,7 +433,7 @@ class Database():
 									continue
 								value = struct.unpack(columns[k][1].FORMAT, file.read(columns[k][1]().getAllocation()[0]))[0]
 								values[columns[k][0]] = value
-							self.insert(table_index, table.object(**values))
+							self.insert(table_index, table.obj(**values))
 				else:
 					raise Exception("Unsupported file fomat")
 		except FileNotFoundError:
