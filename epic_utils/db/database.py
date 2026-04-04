@@ -321,10 +321,10 @@ class Database():
 						file.write(table.key_type(value=key).getBytes()) # key (only int/float allowed for now as I need to implement keys with variable length)
 					object = table.values[key]
 					for col in table.columns:
-						if col[1].DB_IDENT == DB_Str.DB_IDENT:
+						if col[1] == DB_Str.DB_IDENT:
 							file.write(struct.pack(">I", object[col[0]].getAllocation()[0])) # value length
 							file.write(object[col[0]].getBytes())
-						elif col[1].DB_IDENT == DB_Array.DB_IDENT:
+						elif col[1] == DB_Array.DB_IDENT:
 							arr = object[col[0]]
 							file.write(struct.pack(">I", arr.length)) # Length of Array
 							file.write(struct.pack(">B", arr.typ.DB_IDENT))
