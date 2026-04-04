@@ -34,9 +34,10 @@ class DB_Byte(DB_Value):
 		self.set(value)
 	
 	def set(self, value: int):
+		value = int(value)
 		if value < -128 or value > 127:
 			raise ValueError("Value out of range (min: -128, max: 127)")
-		self.value = int(value)
+		self.value = value
 
 class DB_UByte(DB_Value):
 	DB_IDENT = 0x09
@@ -46,9 +47,10 @@ class DB_UByte(DB_Value):
 		self.set(value)
 		
 	def set(self, value: int):
+		value = int(value)
 		if value < 0 or value > 255:
 			raise ValueError("Value out of range (min: 0, max: 255)")
-		self.value = int(value)
+		self.value = value
 
 class DB_Short(DB_Value):
 	DB_IDENT = 0x08
@@ -58,9 +60,10 @@ class DB_Short(DB_Value):
 		self.set(value)
 	
 	def set(self, value: int):
+		value = int(value)
 		if value < -32768 or value > 32767:
 			raise ValueError("Value out of range (min: -32768, max: 32767)")
-		self.value = int(value)
+		self.value = value
 
 class DB_UShort(DB_Value):
 	DB_IDENT = 0x07
@@ -70,9 +73,10 @@ class DB_UShort(DB_Value):
 		self.set(value)
 		
 	def set(self, value: int):
+		value = int(value)
 		if value < 0 or value > 65535:
 			raise ValueError("Value out of range (min: 0, max: 65535)")
-		self.value = int(value)
+		self.value = value
 
 class DB_Int(DB_Value):
 	DB_IDENT = 0x01
@@ -82,9 +86,10 @@ class DB_Int(DB_Value):
 		self.set(value)
 	
 	def set(self, value: int):
+		value = int(value)
 		if value < -2147483648 or value > 2147483647:
 			raise ValueError("Value out of range (min: -2147483648, max: 2147483647)")
-		self.value = int(value)
+		self.value = value
 		
 class DB_UInt(DB_Value):
 	DB_IDENT = 0x02
@@ -94,9 +99,10 @@ class DB_UInt(DB_Value):
 		self.set(value)
 		
 	def set(self, value: int):
+		value = int(value)
 		if value < 0 or value > 4294967295:
 			raise ValueError("Value out of range (min: 0, max: 4294967295)")
-		self.value = int(value)
+		self.value = value
 
 class DB_Float(DB_Value):
 	DB_IDENT = 0x03
@@ -105,7 +111,10 @@ class DB_Float(DB_Value):
 		self.value = float(value)
 		
 	def set(self, value: float):
-		self.value = float(value)
+		value = float(value)
+		if value < -1.7976931348623157e308 or value > 1.7976931348623157e308:
+			raise ValueError("Value out of range (min: -1.7976931348623157e+308, max: 1.7976931348623157e+308)")
+		self.value = value
 						
 class DB_Long(DB_Value):
 	DB_IDENT = 0x04
@@ -115,9 +124,10 @@ class DB_Long(DB_Value):
 		self.set(value)
 		
 	def set(self, value: int):
+		value = int(value)
 		if value < -9223372036854775808 or value > 9223372036854775807:
 			raise ValueError("Value out of range (min: -9223372036854775808, max: 9223372036854775807)")
-		self.value = int(value)
+		self.value = value
 		
 class DB_ULong(DB_Value):
 	DB_IDENT = 0x05
@@ -127,10 +137,10 @@ class DB_ULong(DB_Value):
 		self.set(value)
 		
 	def set(self, value: int):
+		value = int(value)
 		if value < 0 or value > 18446744073709551615:
 			raise ValueError("Value out of range (min: 0, max: 18446744073709551615)")
-			return
-		self.value = int(value)
+		self.value = value
 
 class DB_Str(DB_Value):
 	DB_IDENT = 0x06
