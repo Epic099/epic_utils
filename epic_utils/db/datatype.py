@@ -112,6 +112,18 @@ class DB_Float(DB_Value):
 		
 	def set(self, value: float):
 		value = float(value)
+		if value < -3.4028235e38 or value > 3.4028235e38:
+			raise ValueError("Value out of range (min: -3.4028235e+38, max: 3.4028235e+38)")
+		self.value = value
+
+class DB_Double(DB_Value):
+	DB_IDENT = 0x0c
+	FORMAT = ">d"
+	def __init__(self, value: float = 0.0):
+		self.value = float(value)
+		
+	def set(self, value: float):
+		value = float(value)
 		if value < -1.7976931348623157e308 or value > 1.7976931348623157e308:
 			raise ValueError("Value out of range (min: -1.7976931348623157e+308, max: 1.7976931348623157e+308)")
 		self.value = value
@@ -222,4 +234,4 @@ class DB_Array(DB_Value):
 	def __str__(self):
 		return f"DB_Array({self.typ.__name__}, {self.length}, [{", ".join(str(self.values[i].get()) for i in range(0, self.length))}])"
 	
-TYPELIST = [DB_Byte, DB_UByte, DB_Short, DB_UShort, DB_Int, DB_UInt, DB_Float, DB_Long, DB_ULong, DB_Str, DB_Array]
+TYPELIST = [DB_Byte, DB_UByte, DB_Short, DB_UShort, DB_Int, DB_UInt, DB_Float, DB_Double, DB_Long, DB_ULong, DB_Str, DB_Array]
