@@ -10,7 +10,7 @@ END_IDENT = "STOP".encode("utf-8")
 DATEFORMAT = "%d%m%Y%H%M"
 FORMAT_VERSION = 3 #Version 1 is simple format with only basic data types. Version 2 allows for more complex data types like arrays. Version 3 introduced table ids to better identify tables
 
-class FilterType(Enum):
+class FilterType(Enum):	
     NONE = 0
     EQUALS = 1
     GREATER = 2
@@ -22,7 +22,7 @@ class FilterType(Enum):
     AND = 8
     OR = 9
 		
-class DB_obj:
+class DB_Object:
 	def __init__(self):
 		pass
 		
@@ -265,7 +265,7 @@ class Database():
 			file.write(MAGICNUMBER) # identify file type
 			file.write(struct.pack(">B", 0)) #Space
 			file.write(HEADER_IDENT) # header
-			file.write(struct.pack(">B", FORMAT_VERSION)) #format version (current v = 2)	
+			file.write(struct.pack(">B", FORMAT_VERSION)) #format version
 			self.format =  FORMAT_VERSION
 			file.write(struct.pack(">I", len(self.tables))) #table count
 			file.write(datetime.now().strftime(DATEFORMAT).encode("utf-8")) # save time
